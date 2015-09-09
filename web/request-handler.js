@@ -1,5 +1,6 @@
 var path = require('path');
 var archive = require('../helpers/archive-helpers');
+var assetServer = require('./http-helpers');
 // require more modules/folders here!
 
 exports.handleRequest = function (req, res) {
