@@ -2,7 +2,7 @@ var path = require('path');
 var archive = require('../helpers/archive-helpers');
 var assetServer = require('./http-helpers');
 var fs = require('fs');
-var url = require('url') 
+var url = require('url');
 // require more modules/folders here!
 
 var directoryContents = [];
@@ -24,9 +24,9 @@ exports.handleRequest = function (req, res) {
       pathName = 'index.html';
     }
     // if directoryContents matches asset url, set directory to web/public, otherwise it remains archives/sites/
-    var directory = '/../archives/sites/'; 
+    var directory = archive.paths.archivedSites; 
     if (directoryContents.indexOf(pathName) !== -1) {
-      directory = '/public/';
+      directory = archive.paths.siteAssets;
     }
     assetServer.serveAssets(res, directory + pathName);
     
