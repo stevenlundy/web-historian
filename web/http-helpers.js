@@ -2,6 +2,8 @@ var path = require('path');
 var fs = require('fs');
 var mime = require('mime');
 var archive = require('../helpers/archive-helpers');
+var error = require('./log-helper');
+
 
 exports.headers = headers = {
   'access-control-allow-origin': '*',
@@ -18,7 +20,7 @@ exports.serveAssets = function(res, asset, status, callback) {
   var self = this;
   fs.readFile(asset, function(err, data) {
     if (err) {
-      console.log('ERROR!!1!');
+      error.log('ERROR!!1!');
       res.writeHead(404, self.headers);
       res.end();
     } else {
@@ -27,6 +29,13 @@ exports.serveAssets = function(res, asset, status, callback) {
       res.end(data);
     }
   });
+};
+
+exports.redirect = function(res, url) {
+  var headers = Object.create(exports.headers);
+  headers.location = url;
+  res.writeHead(302, headers);
+  res.end();
 };
 
 exports.readData = function(req, callback) {

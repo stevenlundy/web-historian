@@ -3,13 +3,14 @@ var archive = require('../helpers/archive-helpers');
 var httpHelpers = require('./http-helpers');
 var fs = require('fs');
 var url = require('url');
+var error = require('./log-helper');
 // require more modules/folders here!
 
 var directoryContents = [];
     // fs.readDir() to read files in web/public and then use contains function to see if one of the files matches
 fs.readdir(path.join(__dirname, '/public/'), function(err, files) {
   if (err) {
-    console.log('Could not retrieve those files');
+    error.log('Could not retrieve those files');
   } else {
     directoryContents = files;
   }
@@ -32,16 +33,19 @@ exports.handleRequest = function (req, res) {
     
   }
   if (req.method === 'POST') {
+    debugger;
     httpHelpers.readData(req, function(data){
       var query = url.parse('?' + data, true).query;
-      if(!archive.isUrlInList(query.url)){
-        archive.addUrlToList(query.url);
+      if(query.url !== undefined){
+        if(!archive.isUrlInList(query.url)){
+          archive.addUrlToList(query.url);
+        }
+        archive.isUrlArchived(query.url, function(url){
+          httpHelpers.redirect(res, req.headers.origin + '/' + url);
+        }, function(url){
+          httpHelpers.redirect(res, req.headers.origin + '/' + 'loading.html');
+        });
       }
-      archive.isUrlArchived(query.url, function(url){
-        httpHelpers.serveAssets(res, archive.paths.archivedSites + url, 302);
-      }, function(url){
-        httpHelpers.serveAssets(res, archive.paths.siteAssets + 'loading.html', 302);
-      });
     });
   }
 

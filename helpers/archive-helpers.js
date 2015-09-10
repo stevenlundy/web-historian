@@ -1,6 +1,7 @@
 var fs = require('fs');
 var path = require('path');
 var _ = require('underscore');
+var error = require('../web/log-helper');
 var http = require('http-request');
 
 exports.urlList = [];
@@ -32,7 +33,7 @@ exports.readListOfUrls = function(callback) {
   // go into sites.txt
   fs.readFile(this.paths.list, function(err, data) {
     if (err) {
-      console.log('Site list not found!!!!1! X-0');
+      error.log('Site list not found!!!!1! X-0');
     } else {
       this.urlList = data.toString().split('\n');
       if(typeof callback === 'function'){
@@ -48,9 +49,10 @@ exports.isUrlInList = function(url) {
 };
 
 exports.addUrlToList = function(url) {
+  this.urlList.push(url);
   fs.appendFile(this.paths.list, url + '\n', function(err) {
     if (err) {
-      console.log(url + ' could not be appended to file.');
+      error.log(url + ' could not be appended to file.');
     }
   });
 };
@@ -61,7 +63,7 @@ exports.isUrlArchived = function(url, trueCallback, falseCallback) {
       if(err.code === 'ENOENT'){
         falseCallback(url);
       } else {
-        console.log('Error checking archived sites.');
+        error.log('Error checking archived sites.');
       }
     } else {
       if(stats.isFile()){
@@ -77,21 +79,21 @@ exports.isUrlArchived = function(url, trueCallback, falseCallback) {
 exports.downloadUrl = function(url){
   http.get('http://' + url, function(err, res){
     if(err){
-      console.log(url + ' could not be loaded.')
+      error.log(url + ' could not be loaded.')
     } else {
       fs.writeFile(path.join(this.paths.archivedSites, url), res.buffer.toString(), function(err){
         if(err){
-          console.log('File could not write.');
+          error.log('File could not write.');
         }
       });
-      console.log(url+' archived to '+this.paths.archivedSites);
+      error.log(url+' archived to '+this.paths.archivedSites);
     }
   }.bind(this));
 };
 
 exports.downloadUrls = function() {
   _.each(this.urlList, function(url){
-    this.isUrlArchived(url, function(url){ console.log('you have already archived '+url);/* Do nothing if already archived */}, this.downloadUrl.bind(this));
+    this.isUrlArchived(url, function(url){ error.log('you have already archived '+url);/* Do nothing if already archived */}, this.downloadUrl.bind(this));
   }.bind(this));
 };
 exports.readListOfUrls(exports.downloadUrls.bind(exports)); // Catch up archive
