@@ -1,6 +1,6 @@
 var path = require('path');
 var archive = require('../helpers/archive-helpers');
-var assetServer = require('./http-helpers');
+var httpHelpers = require('./http-helpers');
 var fs = require('fs');
 var url = require('url');
 // require more modules/folders here!
@@ -28,11 +28,21 @@ exports.handleRequest = function (req, res) {
     if (directoryContents.indexOf(pathName) !== -1) {
       directory = archive.paths.siteAssets;
     }
-    assetServer.serveAssets(res, directory + pathName);
+    httpHelpers.serveAssets(res, directory + pathName, 200);
     
   }
   if (req.method === 'POST') {
-
+    httpHelpers.readData(req, function(data){
+      var query = url.parse('?' + data, true).query;
+      if(!archive.isUrlInList(query.url)){
+        archive.addUrlToList(query.url);
+      }
+      archive.isUrlArchived(query.url, function(url){
+        httpHelpers.serveAssets(res, archive.paths.archivedSites + url, 302);
+      }, function(url){
+        httpHelpers.serveAssets(res, archive.paths.siteAssets + 'loading.html', 302);
+      });
+    });
   }
 
   // res.end(archive.paths.list);

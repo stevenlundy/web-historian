@@ -11,24 +11,32 @@ exports.headers = headers = {
   'Content-Type': 'text/html'
 };
 
-exports.serveAssets = function(res, asset, callback) {
+exports.serveAssets = function(res, asset, status, callback) {
   // Write some code here that helps serve up your static files!
   // (Static files are things like html (yours or archived from others...),
   // css, or anything that doesn't change often.)
   var self = this;
-  fs.readFile(path.join(__dirname, asset), function(err, data) {
+  fs.readFile(asset, function(err, data) {
     if (err) {
       console.log('ERROR!!1!');
       res.writeHead(404, self.headers);
       res.end();
     } else {
       // self.headers['Content-Type'] = mime.lookup(asset); // Won't work for www.google.com as asset
-      res.writeHead(200, self.headers);
+      res.writeHead(status, self.headers);
       res.end(data);
     }
   });
+};
 
-
+exports.readData = function(req, callback) {
+  var body = '';
+  req.on('data', function(chunk) {
+    body += chunk;
+  });
+  req.on('end', function() {
+    callback(body);
+  });
 };
 
   // Write some code here that helps serve up your static files!

@@ -3,7 +3,7 @@ var path = require('path');
 var _ = require('underscore');
 var http = require('http-request');
 
-var urlList = [];
+exports.urlList = [];
 
 /*
  * You will need to reuse the same paths many times over in the course of this sprint.
@@ -28,20 +28,23 @@ exports.initialize = function(pathsObj) {
 // The following function names are provided to you to suggest how you might
 // modularize your code. Keep it clean!
 
-exports.readListOfUrls = function() {
+exports.readListOfUrls = function(callback) {
   // go into sites.txt
   fs.readFile(this.paths.list, function(err, data) {
     if (err) {
       console.log('Site list not found!!!!1! X-0');
     } else {
-      urlList = data.split('\n');
+      this.urlList = data.toString().split('\n');
+      if(typeof callback === 'function'){
+        callback();
+      }
     }
-  });
+  }.bind(this));
   // save to outside scope an array of urls
 };
 
 exports.isUrlInList = function(url) {
-  return urlList.indexOf(url) !== -1;
+  return this.urlList.indexOf(url) !== -1;
 };
 
 exports.addUrlToList = function(url) {
@@ -53,23 +56,22 @@ exports.addUrlToList = function(url) {
 };
 
 exports.isUrlArchived = function(url, trueCallback, falseCallback) {
-  fs.stat(this.paths.archivedSites, function(err, stats){
+  fs.stat(this.paths.archivedSites + url, function(err, stats){
     if(err) {
-      console.log('Error checking archived sites.');
+      if(err.code === 'ENOENT'){
+        falseCallback(url);
+      } else {
+        console.log('Error checking archived sites.');
+      }
     } else {
       if(stats.isFile()){
         trueCallback(url);
-      } else {
-        falseCallback(url);
+      } 
+      else {
+        falseCallback(url); // Do we ever get here?
       }
     }
   });
-};
-
-exports.downloadUrls = function() {
-  _.each(urlList, function(url){
-    this.isUrlArchived(url, function(){/* Do nothing if already archived */}, this.downloadUrl(url));
-  }.bind(this));
 };
 
 exports.downloadUrl = function(url){
@@ -78,8 +80,18 @@ exports.downloadUrl = function(url){
       console.log(url + ' could not be loaded.')
     } else {
       fs.writeFile(path.join(this.paths.archivedSites, url), res.buffer.toString(), function(err){
-        console.log('File could not write.');
+        if(err){
+          console.log('File could not write.');
+        }
       });
+      console.log(url+' archived to '+this.paths.archivedSites);
     }
   }.bind(this));
 };
+
+exports.downloadUrls = function() {
+  _.each(this.urlList, function(url){
+    this.isUrlArchived(url, function(url){ console.log('you have already archived '+url);/* Do nothing if already archived */}, this.downloadUrl.bind(this));
+  }.bind(this));
+};
+exports.readListOfUrls(exports.downloadUrls.bind(exports)); // Catch up archive
